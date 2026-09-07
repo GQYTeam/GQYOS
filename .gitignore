@@ -1,0 +1,5 @@
+.DS_Store
+
+# Independent project repositories in the local workspace.
+/gqy-arch-setup/
+/live-setup/
