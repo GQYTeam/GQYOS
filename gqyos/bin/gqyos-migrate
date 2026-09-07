@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# GQYOS 迁移系统
+# 按时间戳顺序执行未完成的迁移
+set -euo pipefail
+
+MIGRATIONS_DIR="/usr/share/gqyos/migrations"
+STATE_DIR="$HOME/.local/state/gqyos/migrations"
+mkdir -p "$STATE_DIR"
+
+if [[ ! -d "$MIGRATIONS_DIR" ]]; then
+  echo "无待执行的迁移"
+  exit 0
+fi
+
+pending=0
+for migration in "$MIGRATIONS_DIR"/*.sh; do
+  [[ -f "$migration" ]] || continue
+  name="$(basename "$migration")"
+  marker="$STATE_DIR/$name"
+
+  if [[ -f "$marker" ]]; then
+    continue
+  fi
+
+  echo "执行迁移: $name"
+  if bash "$migration"; then
+    touch "$marker"
+    echo "  完成"
+  else
+    echo "  失败: $migration"
+    exit 1
+  fi
+  ((pending++))
+done
+
+if [[ $pending -eq 0 ]]; then
+  echo "所有迁移已完成"
+fi

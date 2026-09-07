@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# GQYOS — 顾清影的 AI 系统
+# 主 CLI 入口，路由到子命令
+set -euo pipefail
+
+VERSION="$(cat /usr/share/gqyos/version 2>/dev/null || echo 'dev')"
+
+usage() {
+  cat <<EOF
+GQYOS $VERSION — 顾清影的 AI 系统
+
+用法: gqyos <命令> [参数...]
+
+系统管理:
+  update              更新系统和 GQYOS
+  migrate             运行待执行的迁移
+  reinstall-configs   重置配置到默认值
+  version             显示版本信息
+
+安装:
+  install <组件>      安装组件 (ai, dev, gaming, ...)
+  remove <组件>       移除组件
+
+桌面:
+  theme               主题管理
+  bar                 状态栏控制
+  toggle <选项>       切换设置
+
+硬件:
+  hardware            硬件检测与配置
+  audio               音频管理
+  network             网络管理
+
+AI:
+  ai                  AI 工具链管理
+  gqy                 GQY Agent 控制
+
+工具:
+  doctor              系统诊断
+  logo                显示 GQYOS Logo
+
+更多信息: gqyos help <命令>
+EOF
+}
+
+cmd="${1:-help}"
+shift 2>/dev/null || true
+
+case "$cmd" in
+  version)    echo "GQYOS $VERSION" ;;
+  help|-h|--help) usage ;;
+  doctor)     exec /usr/bin/gqyos-doctor "$@" ;;
+  logo)       exec /usr/bin/gqyos-logo "$@" ;;
+  update)     exec /usr/bin/gqyos-update "$@" ;;
+  migrate)    exec /usr/bin/gqyos-migrate "$@" ;;
+  *)          echo "未知命令: $cmd (运行 'gqyos help' 查看帮助)" ; exit 1 ;;
+esac

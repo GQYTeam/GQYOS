@@ -1,0 +1,96 @@
+# GQYOS 基础包列表
+# ISO pacstrap 和首次安装使用
+
+# === 基础系统 ===
+base
+linux
+linux-firmware
+linux-headers
+amd-ucode
+intel-ucode
+
+# === 引导 ===
+grub
+efibootmgr
+
+# === 桌面核心 ===
+hyprland
+hyprlock
+hypridle
+hyprpaper
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+
+# === 状态栏 ===
+waybar
+
+# === 终端 ===
+kitty
+
+# === 启动器与通知 ===
+fuzzel
+mako
+
+# === Shell ===
+zsh
+zsh-completions
+zsh-autosuggestions
+zsh-syntax-highlighting
+fzf
+
+# === 文件管理 ===
+yazi
+eza
+fd
+ripgrep
+bat
+btop
+tree
+
+# === 编辑器 ===
+neovim
+
+# === 开发工具 ===
+git
+delta
+tmux
+curl
+wget
+jq
+
+# === 网络 ===
+networkmanager
+iwd
+
+# === 安全 ===
+openssh
+ufw
+fail2ban
+
+# === 文件系统 ===
+dosfstools
+lvm2
+device-mapper
+cryptsetup
+btrfs-progs
+ntfs-3g
+
+# === 字体 ===
+noto-fonts
+noto-fonts-cjk
+noto-fonts-emoji
+ttf-jetbrains-mono-nerd
+
+# === 系统工具 ===
+polkit-gnome
+gnome-keyring
+network-manager-applet
+pavucontrol
+蓝屏: bluetooth-support  # 保留注释，按需启用
+
+# === Docker ===
+docker
+docker-compose
+
+# === AI ===
+ollama

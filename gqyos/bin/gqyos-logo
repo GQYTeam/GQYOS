@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# GQYOS Logo 显示
+set -euo pipefail
+
+LOGO="/usr/share/gqyos/logo.txt"
+if [[ -f "$LOGO" ]]; then
+  cat "$LOGO"
+else
+  cat <<'EOF'
+  ____  _____   _____  ____ 
+ / ___|/ _ \ \ / / _ \/ ___|
+| |  _| | | \ V / | | \___ \
+| |_| | |_| || || |_| |___) |
+ \____|\__\_\|_| \___/|____/ 
+EOF
+fi
+echo ""
+echo "  顾清影的 AI 系统 — 为她而造"
+echo ""

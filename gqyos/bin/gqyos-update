@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# GQYOS 系统更新
+set -euo pipefail
+
+echo "GQYOS 系统更新"
+
+# 1. 更新系统包
+echo ">>> 更新系统包..."
+sudo pacman -Syu --noconfirm
+
+# 2. 运行迁移
+echo ">>> 运行迁移..."
+/usr/bin/gqyos-migrate
+
+# 3. 更新 AUR
+if command -v yay &>/dev/null; then
+  echo ">>> 更新 AUR 包..."
+  yay -Sua --noconfirm
+fi
+
+# 4. 更新 GQY Docker
+if command -v docker &>/dev/null; then
+  if docker ps -a --format '{{.Names}}' | grep -q '^gqy$'; then
+    echo ">>> 更新 GQY Agent..."
+    cd ~/.config/GQY 2>/dev/null && docker compose pull && docker compose up -d 2>/dev/null || true
+  fi
+fi
+
+# 5. 更新 Ollama 模型
+if command -v ollama &>/dev/null; then
+  echo ">>> Ollama 版本: $(ollama --version 2>&1 || echo unknown)"
+fi
+
+echo ""
+echo "更新完成。"

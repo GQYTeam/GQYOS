@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# GQYOS 系统诊断
+set -euo pipefail
+
+printf '\n  GQYOS 系统诊断\n\n'
+
+# 系统信息
+echo "=== 系统 ==="
+uname -r
+cat /etc/os-release 2>/dev/null | grep -E "^(NAME|VERSION)=" || true
+
+# 桌面环境
+echo ""
+echo "=== 桌面 ==="
+echo "Session: ${XDG_SESSION_TYPE:-unknown}"
+echo "Desktop: ${XDG_CURRENT_DESKTOP:-unknown}"
+
+# 显卡
+echo ""
+echo "=== 显卡 ==="
+lspci 2>/dev/null | grep -i vga || echo "lspci 不可用"
+
+# 内存
+echo ""
+echo "=== 内存 ==="
+free -h 2>/dev/null || echo "free 不可用"
+
+# 磁盘
+echo ""
+echo "=== 磁盘 ==="
+df -h / 2>/dev/null || echo "df 不可用"
+
+# 网络
+echo ""
+echo "=== 网络 ==="
+ping -c 1 -W 2 archlinux.org &>/dev/null && echo "网络: 正常" || echo "网络: 不可达"
+
+# GQYOS 版本
+echo ""
+echo "=== GQYOS ==="
+VERSION_FILE="/usr/share/gqyos/version"
+if [[ -f "$VERSION_FILE" ]]; then
+  cat "$VERSION_FILE"
+else
+  echo "未安装"
+fi
+
+# Ollama
+echo ""
+echo "=== Ollama ==="
+if command -v ollama &>/dev/null; then
+  echo "已安装: $(ollama --version 2>&1 || echo unknown)"
+  ollama list 2>/dev/null | head -5 || true
+else
+  echo "未安装"
+fi
+
+# Docker
+echo ""
+echo "=== Docker ==="
+if command -v docker &>/dev/null; then
+  docker ps --format '{{.Names}}: {{.Status}}' 2>/dev/null || echo "Docker 未运行"
+else
+  echo "未安装"
+fi
+
+echo ""
+echo "诊断完成。"
