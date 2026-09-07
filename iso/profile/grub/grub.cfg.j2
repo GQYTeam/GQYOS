@@ -1,0 +1,63 @@
+/* GQYOS GRUB 主题 */
+
+set color_normal=white/black
+set color_highlight=black/light-cyan
+
+desktop-image: "background.png"
+desktop-color: "1e1e2e"
+
++ label {
+  top = 15%
+  left = 3%
+  width = 94%
+  height = 15%
+  label = "@VERSION@"
+  color = "58e1ff"
+  font = "/boot/grub/themes/GQYOS/font.pf2"
+  font-size = 24
+}
+
++ label {
+  top = 30%
+  left = 3%
+  width = 94%
+  height = 15%
+  label = "为顾清影而造"
+  color = "cba6f7"
+  font = "/boot/grub/themes/GQYOS/font.pf2"
+  font-size = 16
+}
+
++ menu {
+  top = 50%
+  left = 3%
+  width = 50%
+  height = 35%
+  item_color = "cdd6f4"
+  selected_item_color = "58e1ff"
+  item_height = 24
+  item_padding = 8
+  item_spacing = 4
+  font = "/boot/grub/themes/GQYOS/font.pf2"
+  font-size = 14
+}
+
++ boot-menu-entry {
+  id = "@OSNAME@-default"
+  label = "启动 Live 环境"
+}
+
++ boot-menu-entry {
+  id = "@OSNAME@-nvidia"
+  label = "启动 Live 环境 (NVIDIA)"
+}
+
++ boot-menu-entry {
+  id = "@OSNAME@-safe"
+  label = "启动 Live 环境 (安全模式)"
+}
+
++ boot-menu-entry {
+  id = "uefi-firmware"
+  label = "UEFI 固件设置"
+}
