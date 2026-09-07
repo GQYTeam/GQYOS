@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate ISO profile and scripts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Validate Bash scripts
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          bash -n iso/build-iso.sh
+          bash -n iso/profile/airootfs/usr/local/bin/gqyos-install
+          bash -n iso/profile/airootfs/usr/local/bin/gqyos-docs
+          bash -n iso/profile/airootfs/usr/local/bin/gqyos-live-setup
+
+      - name: Validate profile structure
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for f in iso/profile/profiledef.sh iso/profile/packages.x86_64 iso/profile/grub/grub.cfg; do
+            test -f "$f" || { echo "Missing: $f"; exit 1; }
+          done
+
+      - name: Check required project files
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for file in README.md LICENSE; do
+            test -f "$file"
+          done
