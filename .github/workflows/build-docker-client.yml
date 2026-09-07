@@ -13,6 +13,7 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/gqy
+  GQY_DIR: gqy-arch-setup/config/GQY
 
 jobs:
   # ── Docker 镜像 ──────────────────────────────────────────────
@@ -59,7 +60,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: gqy/gqy
+          context: ${{ env.GQY_DIR }}
+          file: ${{ env.GQY_DIR }}/Dockerfile
           push: ${{ github.ref_type == 'tag' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -104,18 +106,18 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            gqy/gqy/target
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy/gqy/Cargo.lock') }}
+            ${{ env.GQY_DIR }}/target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy-arch-setup/config/GQY/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-
 
       - name: Build
-        working-directory: gqy/gqy
+        working-directory: ${{ env.GQY_DIR }}
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Package
         run: |
-          cd gqy/gqy
+          cd ${{ env.GQY_DIR }}
           ARCHIVE="gqy-${{ steps.version.outputs.tag }}-${{ matrix.target }}.tar.gz"
           tar czf "$GITHUB_WORKSPACE/$ARCHIVE" -C target/${{ matrix.target }}/release gqy
           echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
@@ -130,15 +132,15 @@ jobs:
   client-linux:
     name: Build Client (${{ matrix.target }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
         include:
           - target: x86_64-unknown-linux-musl
-            arch: x86_64
+            zig: x86_64-linux-musl
           - target: aarch64-unknown-linux-musl
-            arch: aarch64
+            zig: aarch64-linux-musl
 
     steps:
       - name: Checkout
@@ -169,12 +171,26 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y pkg-config libssl-dev libfontconfig1-dev libasound2-dev
-          if [[ "${{ matrix.arch }}" == "x86_64" ]]; then
-            sudo apt-get install -y musl-tools
-          fi
 
       - name: Install cargo-zigbuild
         run: cargo install cargo-zigbuild
+
+      - name: Build static ALSA for target
+        run: |
+          set -euxo pipefail
+          export PREFIX=/tmp/alsa-static
+          rm -rf "$PREFIX"
+          mkdir -p "$PREFIX"
+          cd /tmp
+          curl -fsSL "https://www.alsa-project.org/files/pub/lib/alsa-lib-1.2.11.tar.bz2" -o alsa.tar.bz2
+          tar xf alsa.tar.bz2
+          cd alsa-lib-1.2.11
+          CC="zig cc -target ${{ matrix.zig }} -O2" \
+            ./configure --host=${{ matrix.zig }} \
+              --disable-shared --enable-static \
+              --prefix="$PREFIX" --disable-python
+          make -j"$(nproc)"
+          make install
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -182,21 +198,22 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            gqy/gqy/target
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy/gqy/Cargo.lock') }}
+            ${{ env.GQY_DIR }}/target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy-arch-setup/config/GQY/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-
 
       - name: Build with zig
-        working-directory: gqy/gqy
+        working-directory: ${{ env.GQY_DIR }}
         run: |
           export ALSA_STATIC=true
           export PKG_CONFIG_ALLOW_CROSS=1
+          export PKG_CONFIG_PATH=/tmp/alsa-static/lib/pkgconfig:${PKG_CONFIG_PATH:-}
           cargo zigbuild --target ${{ matrix.target }} --release
 
       - name: Package
         run: |
-          cd gqy/gqy
+          cd ${{ env.GQY_DIR }}
           ARCHIVE="gqy-${{ steps.version.outputs.tag }}-${{ matrix.target }}.tar.gz"
           tar czf "$GITHUB_WORKSPACE/$ARCHIVE" -C target/${{ matrix.target }}/release gqy
           echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
