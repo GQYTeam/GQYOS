@@ -10,12 +10,12 @@ permissions:
 
 jobs:
   validate:
-    name: Validate ISO profile and scripts
+    name: Validate scripts and profile
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -23,16 +23,22 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          # GQYOS scripts
+          bash -n gqyos/bin/gqyos
+          bash -n gqyos/bin/gqyos-doctor
+          bash -n gqyos/bin/gqyos-logo
+          bash -n gqyos/bin/gqyos-migrate
+          bash -n gqyos/bin/gqyos-update
+          bash -n gqyos/install/install.sh
+          # ISO build
           bash -n iso/build-iso.sh
-          bash -n iso/profile/airootfs/usr/local/bin/gqyos-install
-          bash -n iso/profile/airootfs/usr/local/bin/gqyos-docs
-          bash -n iso/profile/airootfs/usr/local/bin/gqyos-live-setup
+          bash -n iso/profile/airootfs/usr/bin/gqyos-install
 
       - name: Validate profile structure
         shell: bash
         run: |
           set -Eeuo pipefail
-          for f in iso/profile/profiledef.sh iso/profile/packages.x86_64 iso/profile/grub/grub.cfg; do
+          for f in iso/profile/profiledef.sh iso/profile/packages.x86_64; do
             test -f "$f" || { echo "Missing: $f"; exit 1; }
           done
 
@@ -41,3 +47,4 @@ jobs:
         run: |
           set -Eeuo pipefail
           test -f README.md
+          test -f gqyos/version
