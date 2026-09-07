@@ -62,7 +62,7 @@ jobs:
         with:
           context: ${{ env.GQY_DIR }}
           file: ${{ env.GQY_DIR }}/Dockerfile
-          push: ${{ github.ref_type == 'tag' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -228,7 +228,6 @@ jobs:
   # ── Release（追加产物到已有 release） ──────────────────────
   release:
     name: Append Release Artifacts
-    if: startsWith(github.ref, 'refs/tags/')
     needs: [docker, client-macos, client-linux]
     runs-on: ubuntu-latest
     permissions:
