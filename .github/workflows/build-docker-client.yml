@@ -59,7 +59,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: gqy
+          context: gqy/gqy
           push: ${{ github.ref_type == 'tag' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -104,18 +104,18 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            gqy/target
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy/Cargo.lock') }}
+            gqy/gqy/target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy/gqy/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-
 
       - name: Build
-        working-directory: gqy
+        working-directory: gqy/gqy
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Package
         run: |
-          cd gqy
+          cd gqy/gqy
           ARCHIVE="gqy-${{ steps.version.outputs.tag }}-${{ matrix.target }}.tar.gz"
           tar czf "$GITHUB_WORKSPACE/$ARCHIVE" -C target/${{ matrix.target }}/release gqy
           echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
@@ -182,13 +182,13 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            gqy/target
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy/Cargo.lock') }}
+            gqy/gqy/target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy/gqy/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-
 
       - name: Build with zig
-        working-directory: gqy
+        working-directory: gqy/gqy
         run: |
           export ALSA_STATIC=true
           export PKG_CONFIG_ALLOW_CROSS=1
@@ -196,7 +196,7 @@ jobs:
 
       - name: Package
         run: |
-          cd gqy
+          cd gqy/gqy
           ARCHIVE="gqy-${{ steps.version.outputs.tag }}-${{ matrix.target }}.tar.gz"
           tar czf "$GITHUB_WORKSPACE/$ARCHIVE" -C target/${{ matrix.target }}/release gqy
           echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
