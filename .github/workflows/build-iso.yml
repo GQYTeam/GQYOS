@@ -37,25 +37,26 @@ jobs:
             echo "tag=v$(date +%Y.%m.%d)-dev" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Copy installer into profile
+      - name: Copy installer and gqyos into profile
         run: |
           mkdir -p iso/profile/airootfs/opt/gqyos
+          mkdir -p iso/profile/airootfs/usr/share/gqyos
+          mkdir -p iso/profile/airootfs/usr/bin
+          # 复制安装器
           cp live-setup/install-arch/install-arch.sh iso/profile/airootfs/opt/gqyos/
           chmod +x iso/profile/airootfs/opt/gqyos/install-arch.sh
-          mkdir -p iso/profile/airootfs/usr/share/gqyos
-          cp asses/gqyos-logo-sunset.ansi iso/profile/airootfs/usr/share/gqyos/ 2>/dev/null || true
-          cp asses/GQYOS-logo.png iso/profile/airootfs/usr/share/gqyos/ 2>/dev/null || true
-          mkdir -p iso/profile/airootfs/opt/gqyos/docs
-          cp gqy-arch-setup/README.md iso/profile/airootfs/opt/gqyos/docs/ 2>/dev/null || true
+          # 复制 gqyos 核心
+          cp -r gqyos/bin/* iso/profile/airootfs/usr/bin/ 2>/dev/null || true
+          cp -r gqyos/* iso/profile/airootfs/usr/share/gqyos/ 2>/dev/null || true
+          cp gqyos/version iso/profile/airootfs/usr/share/gqyos/ 2>/dev/null || true
 
       - name: Build ISO
         run: |
-          cd "$GITHUB_WORKSPACE"
-          mkarchiso -w ./work -D ./out iso/profile
+          mkarchiso -w /work -D /out iso/profile
 
       - name: Generate checksums
         run: |
-          cd "$GITHUB_WORKSPACE/out"
+          cd /out
           sha256sum *.iso > SHA256SUMS
           cat SHA256SUMS
 
