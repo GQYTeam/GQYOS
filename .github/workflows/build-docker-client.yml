@@ -13,7 +13,6 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/gqy
-  GQY_REPO: https://github.com/GQYTeam/GQY.git
 
 jobs:
   # ── Docker 镜像 ──────────────────────────────────────────────
@@ -23,8 +22,10 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: Checkout GQYOS (for version)
+      - name: Checkout
         uses: actions/checkout@v7
+        with:
+          submodules: recursive
 
       - name: Determine version
         id: version
@@ -34,12 +35,6 @@ jobs:
             GQY_VER="v$(date +%Y.%m.%d)-dev"
           fi
           echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout GQY
-        uses: actions/checkout@v7
-        with:
-          repository: GQYTeam/GQY
-          path: gqy
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -84,8 +79,10 @@ jobs:
           - target: x86_64-apple-darwin
 
     steps:
-      - name: Checkout GQYOS (for version)
+      - name: Checkout
         uses: actions/checkout@v7
+        with:
+          submodules: recursive
 
       - name: Determine version
         id: version
@@ -95,12 +92,6 @@ jobs:
             GQY_VER="v$(date +%Y.%m.%d)-dev"
           fi
           echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout GQY
-        uses: actions/checkout@v7
-        with:
-          repository: GQYTeam/GQY
-          path: gqy
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -150,8 +141,10 @@ jobs:
             arch: aarch64
 
     steps:
-      - name: Checkout GQYOS (for version)
+      - name: Checkout
         uses: actions/checkout@v7
+        with:
+          submodules: recursive
 
       - name: Determine version
         id: version
@@ -161,12 +154,6 @@ jobs:
             GQY_VER="v$(date +%Y.%m.%d)-dev"
           fi
           echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout GQY
-        uses: actions/checkout@v7
-        with:
-          repository: GQYTeam/GQY
-          path: gqy
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -231,8 +218,10 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout GQYOS (for version)
+      - name: Checkout
         uses: actions/checkout@v7
+        with:
+          submodules: recursive
 
       - name: Determine version
         id: version
