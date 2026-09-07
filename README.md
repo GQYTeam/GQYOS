@@ -4,7 +4,10 @@
 
 # GQYOS
 
-### A focused Arch Linux system for modern workstations
+### 顾清影的 AI 系统 — 为她而造
+
+> GQYOS 是一个为顾清影打造的 AI 驱动 Arch Linux 系统。
+> 它不只是操作系统，而是她与数字世界交互的智能伙伴。
 
 基于 Arch Linux，面向 Hyprland、加密磁盘与可重复安装流程的个人 Linux 系统项目。
 
@@ -13,6 +16,15 @@
 [![Status](https://img.shields.io/badge/status-in%20development-F2C94C)](https://github.com/GQYTeam/GQYOS)
 
 </div>
+
+## 项目理念
+
+GQYOS 的核心使命是**为顾清影提供一个完整的 AI 系统体验**。它不只是一个安装脚本集合，而是一个从零开始、为她量身定制的智能工作环境：
+
+- **AI 原生** — 系统集成 AI 工具链，让顾清影随时可以与 AI 协作
+- **安全优先** — LUKS2 全盘加密保护她的数据和隐私
+- **优雅高效** — Hyprland 工作站提供流畅的键盘驱动体验
+- **可重复** — 一键安装、一键恢复，不需要反复配置
 
 GQYOS 希望把 Arch Linux 的自由度，整理成一套能够真正安装、使用和持续维护的系统体验。从 Live 环境开始，完成磁盘、基础系统、启动配置，再进入一个适合日常工作的 Hyprland 工作站。
 
@@ -48,7 +60,9 @@ curl -fsSL https://raw.githubusercontent.com/GQYTeam/live-setup/main/install-arc
 
 ## 适合谁
 
-GQYOS 适合希望减少重复配置、偏好键盘驱动桌面、需要磁盘加密，并且愿意维护 Arch Linux 的用户。
+GQYOS 首先为**顾清影**而造 —— 她需要一个安全、智能、高效的工作环境。
+
+同时也适合希望减少重复配置、偏好键盘驱动桌面、需要磁盘加密，并且愿意维护 Arch Linux 的用户。
 
 它不是面向完全零基础用户的一键系统。你需要理解目标磁盘、UEFI、分区和 LUKS 密码的重要性；加密密码丢失后，数据无法恢复。
 
