@@ -52,13 +52,12 @@ jobs:
 
       - name: Build ISO
         run: |
-          mkarchiso --help 2>&1 | head -30
-          echo "---"
-          ls -la ./iso/profile/
+          cd "$GITHUB_WORKSPACE"
+          mkarchiso -v -w ./work -o ./out ./iso/profile
 
       - name: Generate checksums
         run: |
-          cd /out
+          cd "$GITHUB_WORKSPACE/out"
           sha256sum *.iso > SHA256SUMS
           cat SHA256SUMS
 
