@@ -1,0 +1,6 @@
+[submodule "gqy-arch-setup"]
+	path = gqy-arch-setup
+	url = https://github.com/GQYTeam/gqy-arch-setup.git
+[submodule "live-setup"]
+	path = live-setup
+	url = https://github.com/GQYTeam/live-setup.git
