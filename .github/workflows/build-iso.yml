@@ -52,7 +52,9 @@ jobs:
 
       - name: Build ISO
         run: |
-          mkarchiso -w /work -D /out iso/profile
+          mkarchiso --help 2>&1 | head -30
+          echo "---"
+          ls -la ./iso/profile/
 
       - name: Generate checksums
         run: |
