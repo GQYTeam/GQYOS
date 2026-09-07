@@ -13,6 +13,7 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/gqy
+  GQY_REPO: https://github.com/GQYTeam/GQY.git
 
 jobs:
   # ── Docker 镜像 ──────────────────────────────────────────────
@@ -22,21 +23,23 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: Checkout
+      - name: Checkout GQYOS (for version)
         uses: actions/checkout@v7
-        with:
-          submodules: recursive
 
       - name: Determine version
         id: version
         run: |
-          # 从 gqyos/version 读取版本号，与 ISO 对齐
           GQY_VER=$(cat gqyos/version | grep -oE 'v[0-9.]+' | head -1)
           if [[ -z "$GQY_VER" ]]; then
             GQY_VER="v$(date +%Y.%m.%d)-dev"
           fi
           echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
-          echo "version=${GQY_VER#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout GQY
+        uses: actions/checkout@v7
+        with:
+          repository: GQYTeam/GQY
+          path: gqy
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -56,12 +59,12 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: gqy-arch-setup/config/GQY
+          context: gqy
           push: ${{ github.ref_type == 'tag' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -81,21 +84,23 @@ jobs:
           - target: x86_64-apple-darwin
 
     steps:
-      - name: Checkout
+      - name: Checkout GQYOS (for version)
         uses: actions/checkout@v7
-        with:
-          submodules: recursive
-          subpath: gqy-arch-setup
 
       - name: Determine version
         id: version
         run: |
-          # 从 gqyos/version 读取版本号，与 ISO 对齐
           GQY_VER=$(cat gqyos/version | grep -oE 'v[0-9.]+' | head -1)
           if [[ -z "$GQY_VER" ]]; then
             GQY_VER="v$(date +%Y.%m.%d)-dev"
           fi
           echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout GQY
+        uses: actions/checkout@v7
+        with:
+          repository: GQYTeam/GQY
+          path: gqy
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -108,18 +113,18 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            gqy-arch-setup/config/GQY/target
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy-arch-setup/config/GQY/Cargo.lock') }}
+            gqy/target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-
 
       - name: Build
-        working-directory: gqy-arch-setup/config/GQY
+        working-directory: gqy
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Package
         run: |
-          cd gqy-arch-setup/config/GQY
+          cd gqy
           ARCHIVE="gqy-${{ steps.version.outputs.tag }}-${{ matrix.target }}.tar.gz"
           tar czf "$GITHUB_WORKSPACE/$ARCHIVE" -C target/${{ matrix.target }}/release gqy
           echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
@@ -145,21 +150,23 @@ jobs:
             arch: aarch64
 
     steps:
-      - name: Checkout
+      - name: Checkout GQYOS (for version)
         uses: actions/checkout@v7
-        with:
-          submodules: recursive
-          subpath: gqy-arch-setup
 
       - name: Determine version
         id: version
         run: |
-          # 从 gqyos/version 读取版本号，与 ISO 对齐
           GQY_VER=$(cat gqyos/version | grep -oE 'v[0-9.]+' | head -1)
           if [[ -z "$GQY_VER" ]]; then
             GQY_VER="v$(date +%Y.%m.%d)-dev"
           fi
           echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout GQY
+        uses: actions/checkout@v7
+        with:
+          repository: GQYTeam/GQY
+          path: gqy
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -175,7 +182,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y pkg-config libssl-dev libfontconfig1-dev libasound2-dev
-          # Install musl tools for static linking
           if [[ "${{ matrix.arch }}" == "x86_64" ]]; then
             sudo apt-get install -y musl-tools
           fi
@@ -189,13 +195,13 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            gqy-arch-setup/config/GQY/target
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy-arch-setup/config/GQY/Cargo.lock') }}
+            gqy/target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-
 
       - name: Build with zig
-        working-directory: gqy-arch-setup/config/GQY
+        working-directory: gqy
         run: |
           export ALSA_STATIC=true
           export PKG_CONFIG_ALLOW_CROSS=1
@@ -203,7 +209,7 @@ jobs:
 
       - name: Package
         run: |
-          cd gqy-arch-setup/config/GQY
+          cd gqy
           ARCHIVE="gqy-${{ steps.version.outputs.tag }}-${{ matrix.target }}.tar.gz"
           tar czf "$GITHUB_WORKSPACE/$ARCHIVE" -C target/${{ matrix.target }}/release gqy
           echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
@@ -225,19 +231,21 @@ jobs:
       contents: write
 
     steps:
+      - name: Checkout GQYOS (for version)
+        uses: actions/checkout@v7
+
+      - name: Determine version
+        id: version
+        run: |
+          GQY_VER=$(cat gqyos/version | grep -oE 'v[0-9.]+' | head -1)
+          echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
+
       - name: Download all client artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
           pattern: client-*
           merge-multiple: true
-
-      - name: Determine version
-        id: version
-        run: |
-          # 从 gqyos/version 读取版本号，与 ISO 对齐
-          GQY_VER=$(cat gqyos/version | grep -oE 'v[0-9.]+' | head -1)
-          echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
 
       - name: Generate checksums
         run: |
