@@ -1,0 +1,291 @@
+name: Build Docker & Client
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/gqy
+
+jobs:
+  # ── Docker 镜像 ──────────────────────────────────────────────
+  docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Determine version
+        id: version
+        run: |
+          # 从 gqyos/version 读取版本号，与 ISO 对齐
+          GQY_VER=$(cat gqyos/version | grep -oE 'v[0-9.]+' | head -1)
+          if [[ -z "$GQY_VER" ]]; then
+            GQY_VER="v$(date +%Y.%m.%d)-dev"
+          fi
+          echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
+          echo "version=${GQY_VER#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: gqy-arch-setup/config/GQY
+          push: ${{ github.ref_type == 'tag' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── 客户端二进制（macOS 原生 + Linux 交叉编译） ─────────────
+  client-macos:
+    name: Build Client (${{ matrix.target }})
+    runs-on: macos-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+          - target: x86_64-apple-darwin
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          subpath: gqy-arch-setup
+
+      - name: Determine version
+        id: version
+        run: |
+          # 从 gqyos/version 读取版本号，与 ISO 对齐
+          GQY_VER=$(cat gqyos/version | grep -oE 'v[0-9.]+' | head -1)
+          if [[ -z "$GQY_VER" ]]; then
+            GQY_VER="v$(date +%Y.%m.%d)-dev"
+          fi
+          echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            gqy-arch-setup/config/GQY/target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy-arch-setup/config/GQY/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-
+
+      - name: Build
+        working-directory: gqy-arch-setup/config/GQY
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package
+        run: |
+          cd gqy-arch-setup/config/GQY
+          ARCHIVE="gqy-${{ steps.version.outputs.tag }}-${{ matrix.target }}.tar.gz"
+          tar czf "$GITHUB_WORKSPACE/$ARCHIVE" -C target/${{ matrix.target }}/release gqy
+          echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-${{ matrix.target }}
+          path: gqy-*.tar.gz
+          retention-days: 7
+
+  client-linux:
+    name: Build Client (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            arch: x86_64
+          - target: aarch64-unknown-linux-musl
+            arch: aarch64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          subpath: gqy-arch-setup
+
+      - name: Determine version
+        id: version
+        run: |
+          # 从 gqyos/version 读取版本号，与 ISO 对齐
+          GQY_VER=$(cat gqyos/version | grep -oE 'v[0-9.]+' | head -1)
+          if [[ -z "$GQY_VER" ]]; then
+            GQY_VER="v$(date +%Y.%m.%d)-dev"
+          fi
+          echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.13.0
+
+      - name: Install cross-compilation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libssl-dev libfontconfig1-dev libasound2-dev
+          # Install musl tools for static linking
+          if [[ "${{ matrix.arch }}" == "x86_64" ]]; then
+            sudo apt-get install -y musl-tools
+          fi
+
+      - name: Install cargo-zigbuild
+        run: cargo install cargo-zigbuild
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            gqy-arch-setup/config/GQY/target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('gqy-arch-setup/config/GQY/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-
+
+      - name: Build with zig
+        working-directory: gqy-arch-setup/config/GQY
+        run: |
+          export ALSA_STATIC=true
+          export PKG_CONFIG_ALLOW_CROSS=1
+          cargo zigbuild --target ${{ matrix.target }} --release
+
+      - name: Package
+        run: |
+          cd gqy-arch-setup/config/GQY
+          ARCHIVE="gqy-${{ steps.version.outputs.tag }}-${{ matrix.target }}.tar.gz"
+          tar czf "$GITHUB_WORKSPACE/$ARCHIVE" -C target/${{ matrix.target }}/release gqy
+          echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-${{ matrix.target }}
+          path: gqy-*.tar.gz
+          retention-days: 7
+
+  # ── Release（追加产物到已有 release） ──────────────────────
+  release:
+    name: Append Release Artifacts
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [docker, client-macos, client-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all client artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: client-*
+          merge-multiple: true
+
+      - name: Determine version
+        id: version
+        run: |
+          # 从 gqyos/version 读取版本号，与 ISO 对齐
+          GQY_VER=$(cat gqyos/version | grep -oE 'v[0-9.]+' | head -1)
+          echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          sha256sum *.tar.gz > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Append to existing release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          append_body: true
+          body: |
+            
+            ---
+            
+            ### 🐳 Docker 镜像
+            ```bash
+            docker pull ghcr.io/${{ github.repository_owner }}/gqy:${{ steps.version.outputs.tag }}
+            GQY_WEB_PASSWORD=secret docker run -d -p 8300:8300 \
+              -v gqy-data:/data \
+              ghcr.io/${{ github.repository_owner }}/gqy:${{ steps.version.outputs.tag }}
+            ```
+            浏览器打开 http://localhost:8300 即可使用。
+            
+            ### 📦 客户端安装
+            ```bash
+            # macOS (Apple Silicon)
+            curl -fsSL https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/gqy-${{ steps.version.outputs.tag }}-aarch64-apple-darwin.tar.gz | tar xz
+            sudo mv gqy /usr/local/bin/
+            
+            # macOS (Intel)
+            curl -fsSL https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/gqy-${{ steps.version.outputs.tag }}-x86_64-apple-darwin.tar.gz | tar xz
+            sudo mv gqy /usr/local/bin/
+            
+            # Linux (x86_64 musl)
+            curl -fsSL https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/gqy-${{ steps.version.outputs.tag }}-x86_64-unknown-linux-musl.tar.gz | tar xz
+            sudo mv gqy /usr/local/bin/
+            
+            # Linux (aarch64 musl)
+            curl -fsSL https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/gqy-${{ steps.version.outputs.tag }}-aarch64-unknown-linux-musl.tar.gz | tar xz
+            sudo mv gqy /usr/local/bin/
+            ```
+            
+            ### 🔐 校验
+            下载 SHA256SUMS 验证文件完整性。
+          files: |
+            artifacts/*.tar.gz
+            artifacts/SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

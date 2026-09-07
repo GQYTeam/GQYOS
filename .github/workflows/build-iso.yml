@@ -31,11 +31,12 @@ jobs:
       - name: Determine version
         id: version
         run: |
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=v$(date +%Y.%m.%d)-dev" >> "$GITHUB_OUTPUT"
+          # 从 gqyos/version 读取版本号
+          GQY_VER=$(cat gqyos/version | grep -oE 'v[0-9.]+' | head -1)
+          if [[ -z "$GQY_VER" ]]; then
+            GQY_VER="v$(date +%Y.%m.%d)-dev"
           fi
+          echo "tag=$GQY_VER" >> "$GITHUB_OUTPUT"
 
       - name: Copy installer and gqyos into profile
         run: |
