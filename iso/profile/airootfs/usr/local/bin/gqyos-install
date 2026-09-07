@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# GQYOS 安装器包装脚本
+# 整合 live-setup/install-arch.sh 到 ISO 环境
+set -euo pipefail
+
+INSTALLER="/opt/gqyos/install-arch.sh"
+
+# 显示 logo
+printf '\n'
+printf '  ╔══════════════════════════════════╗\n'
+printf '  ║   GQYOS 安装器                   ║\n'
+printf '  ║   为顾清影而造                   ║\n'
+printf '  ╚══════════════════════════════════╝\n'
+printf '\n'
+
+if [[ ! -f "$INSTALLER" ]]; then
+  echo "错误: 找不到安装器: $INSTALLER" >&2
+  echo "请从 https://github.com/GQYTeam/live-setup 获取" >&2
+  exit 1
+fi
+
+# 确保网络连通
+if ! ping -c 1 archlinux.org &>/dev/null; then
+  echo "警告: 网络未连接，安装器可能无法正常工作"
+  echo "请先连接网络: nmcli device wifi list && nmcli device wifi connect <SSID>"
+  echo ""
+  read -rp "是否继续？[y/N] " confirm
+  [[ "${confirm,,}" != "y" ]] && exit 0
+fi
+
+exec bash "$INSTALLER" "$@"

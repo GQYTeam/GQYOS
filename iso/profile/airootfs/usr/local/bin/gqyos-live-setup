@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# GQYOS Live 环境自动配置服务
+# 启动时自动设置 live 用户环境
+set -euo pipefail
+
+# 设置 live 用户密码（空密码，允许自动登录）
+if id live &>/dev/null; then
+  echo "live" | passwd --stdin live 2>/dev/null || true
+fi
+
+# 启动 NetworkManager
+systemctl start NetworkManager 2>/dev/null || true
+
+# 设置时区
+timedatectl set-timezone Asia/Shanghai 2>/dev/null || true
