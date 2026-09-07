@@ -8,10 +8,11 @@ linux-headers
 amd-ucode
 intel-ucode
 
-# === 引导 (systemd-boot) ===
-systemd-boot-manager
+# === 引导 (GRUB) ===
+grub
 efibootmgr
 dosfstools
+mtools
 
 # === 安装器依赖 ===
 arch-install-scripts
