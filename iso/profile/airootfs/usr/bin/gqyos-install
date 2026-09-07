@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# GQYOS 安装器入口
+set -euo pipefail
+
+printf '\n  GQYOS 安装器 — 为顾清影而造\n\n'
+
+INSTALLER="/opt/gqyos/install-arch.sh"
+if [[ ! -f "$INSTALLER" ]]; then
+  echo "错误: 安装器不存在" >&2
+  exit 1
+fi
+
+exec bash "$INSTALLER" "$@"
