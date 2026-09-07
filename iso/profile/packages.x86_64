@@ -10,8 +10,6 @@ intel-ucode
 
 # === 引导 ===
 syslinux
-syslinux-bios
-syslinux-efi-uboot
 efibootmgr
 dosfstools
 mtools
@@ -47,7 +45,6 @@ fzf
 
 # === 工具 ===
 git
-delta
 neovim
 yazi
 eza
@@ -60,6 +57,7 @@ tree
 jq
 curl
 wget
+util-linux
 
 # === 字体 ===
 noto-fonts
@@ -74,8 +72,6 @@ docker-compose
 ollama
 openssh
 pciutils
-util-linux
-lsblk
 
 # === 安全 ===
 ufw
