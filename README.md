@@ -33,7 +33,14 @@ GQYOS 希望把 Arch Linux 的自由度，整理成一套能够真正安装、�
 > [!CAUTION]
 > 安装器默认会清空选中的整块磁盘。运行前请确认目标设备，并备份所有重要数据。
 
-请从 Arch Linux 官方 Live ISO 启动，确认网络正常、处于 UEFI 模式并拥有 root 权限，然后运行：
+请从 GQYOS Live ISO 启动，系统会自动进入安装环境：
+
+```bash
+# 运行安装器
+sudo gqyos-install
+```
+
+ISO 从 [Releases](https://github.com/GQYTeam/GQYOS/releases) 下载，或在 Arch Linux Live ISO 上直接运行安装脚本：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/GQYTeam/live-setup/main/install-arch/install-arch.sh | bash
@@ -72,11 +79,25 @@ GQYOS 由一个系统总仓库和两个独立组件组成：
 
 | 项目 | 负责内容 |
 | --- | --- |
-| [GQYOS](https://github.com/GQYTeam/GQYOS) | 系统方向、版本关系、集成说明和用户文档 |
+| [GQYOS](https://github.com/GQYTeam/GQYOS) | 系统方向、ISO 构建、版本关系、集成说明和用户文档 |
 | [Live Setup](https://github.com/GQYTeam/live-setup) | Live 环境中的磁盘、系统和启动配置 |
 | [GQY Arch Setup](https://github.com/GQYTeam/gqy-arch-setup) | 已安装系统中的桌面、工具和基础环境 |
 
 组件拥有独立的 Git 历史、测试流程和发布周期。GQYOS 负责记录经过验证的组件组合。
+
+## ISO 构建
+
+```bash
+# 本地构建 (需要 Arch Linux + archiso)
+sudo pacman -S archiso
+sudo ./iso/build-iso.sh
+
+# 自动构建: 推送 tag 触发 CI
+git tag v25.01.01
+git push origin v25.01.01
+```
+
+详见 [iso/README.md](iso/README.md)。
 
 ## 安全检查
 
