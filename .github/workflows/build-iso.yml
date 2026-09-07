@@ -5,10 +5,6 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: '版本号 (留空自动检测)'
-        required: false
 
 permissions:
   contents: write
@@ -17,9 +13,16 @@ jobs:
   build-iso:
     name: Build ISO
     runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
     timeout-minutes: 60
 
     steps:
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm archiso git
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -28,38 +31,30 @@ jobs:
       - name: Determine version
         id: version
         run: |
-          if [[ -n "${{ github.event.inputs.version }}" ]]; then
-            echo "tag=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
             echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
           else
             echo "tag=v$(date +%Y.%m.%d)-dev" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Install archiso
-        run: |
-          sudo pacman -Sy --noconfirm archiso
 
       - name: Copy installer into profile
         run: |
           mkdir -p iso/profile/airootfs/opt/gqyos
           cp live-setup/install-arch/install-arch.sh iso/profile/airootfs/opt/gqyos/
           chmod +x iso/profile/airootfs/opt/gqyos/install-arch.sh
-          # 复制 logo 素材
           mkdir -p iso/profile/airootfs/usr/share/gqyos
           cp asses/gqyos-logo-sunset.ansi iso/profile/airootfs/usr/share/gqyos/ 2>/dev/null || true
           cp asses/GQYOS-logo.png iso/profile/airootfs/usr/share/gqyos/ 2>/dev/null || true
-          # 复制文档
           mkdir -p iso/profile/airootfs/opt/gqyos/docs
           cp gqy-arch-setup/README.md iso/profile/airootfs/opt/gqyos/docs/ 2>/dev/null || true
 
       - name: Build ISO
         run: |
-          sudo ./iso/build-iso.sh
+          mkarchiso -w /work -D /out iso/profile
 
       - name: Generate checksums
         run: |
-          cd iso/out
+          cd /out
           sha256sum *.iso > SHA256SUMS
           cat SHA256SUMS
 
@@ -68,8 +63,8 @@ jobs:
         with:
           name: GQYOS-${{ steps.version.outputs.tag }}
           path: |
-            iso/out/*.iso
-            iso/out/SHA256SUMS
+            /out/*.iso
+            /out/SHA256SUMS
           retention-days: 30
 
       - name: Create Release
@@ -91,8 +86,8 @@ jobs:
             ### 校验
             下载 SHA256SUMS 文件验证 ISO 完整性。
           files: |
-            iso/out/*.iso
-            iso/out/SHA256SUMS
+            /out/*.iso
+            /out/SHA256SUMS
           draft: false
           prerelease: false
         env:
