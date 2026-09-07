@@ -1,0 +1,69 @@
+# GQYOS ISO 包列表
+# 最小化 Live 环境 + 安装器依赖
+
+# === 基础系统 ===
+base
+linux
+linux-firmware
+linux-headers
+amd-ucode
+intel-ucode
+
+# === 引导 ===
+grub
+efibootmgr
+dosfstools
+
+# === 安装器依赖 ===
+arch-install-scripts
+fstools
+lvm2
+device-mapper
+cryptsetup
+dialog
+rsync
+bash-completion
+
+# === 网络 ===
+networkmanager
+iwd
+dhcpcd
+
+# === 工具 ===
+vim
+nano
+git
+curl
+wget
+rsync
+tmux
+tree
+htop
+jq
+
+# === 文件系统 ===
+btrfs-progs
+xfsprogs
+dosfstools
+ntfs-3g
+
+# === 安全 ===
+openssh
+reflector
+
+# === Hyprland 安装器需要的包 ===
+# （安装器会通过 pacstrap 安装到目标系统，但 Live 环境需要 dialog）
+# dialog 已在上方
+
+# === 桌面环境安装器依赖 ===
+# 这些包在 Live 环境中不需要，但安装器脚本中引用了它们
+# 确保安装器能正确检测硬件
+pciutils
+usbutils
+lsblk
+util-linux
+
+# === 字体（Live 环境中文显示） ===
+noto-fonts
+noto-fonts-cjk
+noto-fonts-emoji
