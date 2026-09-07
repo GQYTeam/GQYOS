@@ -25,8 +25,8 @@ ISO 输出到 `out/` 目录。
 推送 `v*` tag 自动触发 GitHub Actions 构建 ISO 并发布到 Release:
 
 ```bash
-git tag v25.01.01
-git push origin v25.01.01
+git tag v26.09.07
+git push origin v26.09.07
 ```
 
 ## ISO 内容

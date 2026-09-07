@@ -93,8 +93,8 @@ sudo pacman -S archiso
 sudo ./iso/build-iso.sh
 
 # 自动构建: 推送 tag 触发 CI
-git tag v25.01.01
-git push origin v25.01.01
+git tag v26.09.07
+git push origin v26.09.07
 ```
 
 详见 [iso/README.md](iso/README.md)。
