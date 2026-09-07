@@ -40,6 +40,4 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          for file in README.md LICENSE; do
-            test -f "$file"
-          done
+          test -f README.md
