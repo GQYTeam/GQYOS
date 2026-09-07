@@ -50,11 +50,12 @@ jobs:
 
       - name: Build ISO
         run: |
-          mkarchiso -w /work -D /out iso/profile
+          cd "$GITHUB_WORKSPACE"
+          mkarchiso -w ./work -D ./out iso/profile
 
       - name: Generate checksums
         run: |
-          cd /out
+          cd "$GITHUB_WORKSPACE/out"
           sha256sum *.iso > SHA256SUMS
           cat SHA256SUMS
 
@@ -63,8 +64,8 @@ jobs:
         with:
           name: GQYOS-${{ steps.version.outputs.tag }}
           path: |
-            /out/*.iso
-            /out/SHA256SUMS
+            ${{ github.workspace }}/out/*.iso
+            ${{ github.workspace }}/out/SHA256SUMS
           retention-days: 30
 
       - name: Create Release
@@ -86,8 +87,8 @@ jobs:
             ### 校验
             下载 SHA256SUMS 文件验证 ISO 完整性。
           files: |
-            /out/*.iso
-            /out/SHA256SUMS
+            ${{ github.workspace }}/out/*.iso
+            ${{ github.workspace }}/out/SHA256SUMS
           draft: false
           prerelease: false
         env:
