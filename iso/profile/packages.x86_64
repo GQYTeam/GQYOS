@@ -8,8 +8,8 @@ linux-headers
 amd-ucode
 intel-ucode
 
-# === 引导 ===
-grub
+# === 引导 (systemd-boot) ===
+systemd-boot-manager
 efibootmgr
 dosfstools
 

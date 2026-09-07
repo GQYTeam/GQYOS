@@ -9,9 +9,8 @@ profile_publisher="GQYOS Team"
 profile_application_name="GQYOS Install Medium"
 
 # ========== 引导加载 ========== #
+# 使用 systemd-boot (UEFI)
 bootmode=("uefi-x64-systemd-boot")
-bootloader_loader_timeout=10
 
 # ========== 用户 ========== #
-# Live 环境用户（安装器以 root 运行）
 user_shell="/bin/zsh"
